@@ -4,6 +4,11 @@ on: [push]
 jobs:
   build:
     runs-on: macos-latest
+    # This line tells the server to run all commands inside the 'cashew' folder
+    defaults:
+      run:
+        working-directory: ./cashew
+
     steps:
       - uses: actions/checkout@v4
       
@@ -13,7 +18,7 @@ jobs:
           node-version: 20
           
       - name: Install Dependencies
-        run: npm install # Cashew uses npm, not pnpm
+        run: npm install
 
       - name: Build Web App
         run: npm run build
@@ -22,6 +27,7 @@ jobs:
         run: |
           npm install @capacitor/ios @capacitor/core @capacitor/cli
           npx cap add ios
+          # We manually sync the dist folder because of the subfolder structure
           npx cap sync ios
 
       - name: Build Unsigned IPA
@@ -40,4 +46,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Cashew-IPA
-          path: Cashew.ipa
+          # We need the full path to the final file for the upload step
+          path: cashew/Cashew.ipa
