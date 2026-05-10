@@ -1,50 +1,37 @@
-name: Build Cashew IPA
+name: Build Cashew IPA (Flutter)
 on: [push]
 
 jobs:
   build:
     runs-on: macos-latest
-    # This line tells the server to run all commands inside the 'cashew' folder
     defaults:
       run:
-        working-directory: budget
+        working-directory: budget # This is where the actual code lives
 
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Install Node
-        uses: actions/setup-node@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
         with:
-          node-version: 20
-          
-      - name: Install Dependencies
-        run: npm install
+          channel: 'stable'
+          flutter-version: '3.19.0' # Adjust if the app requires a specific version
 
-      - name: Build Web App
-        run: npm run build
+      - name: Get Dependencies
+        run: flutter pub get
 
-      - name: Generate iOS Project
+      - name: Build iOS (No Signing)
         run: |
-          npm install @capacitor/ios @capacitor/core @capacitor/cli
-          npx cap add ios
-          # We manually sync the dist folder because of the subfolder structure
-          npx cap sync ios
+          flutter build ios --release --no-codesign
 
-      - name: Build Unsigned IPA
+      - name: Create IPA (Manual Wrapper)
         run: |
-          xcodebuild -project ios/App/App.xcodeproj \
-                     -scheme App \
-                     -configuration Release \
-                     -archivePath App.xcarchive archive \
-                     CODE_SIGNING_ALLOWED=NO
-          
           mkdir -p Payload
-          cp -r App.xcarchive/Products/Applications/App.app Payload/
+          cp -r build/ios/iphoneos/Runner.app Payload/
           zip -r Cashew.ipa Payload
 
-      - name: Upload Artifact
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: Cashew-IPA
-          # We need the full path to the final file for the upload step
-          path: cashew/Cashew.ipa
+          name: Cashew-iOS-App
+          path: budget/Cashew.ipa
