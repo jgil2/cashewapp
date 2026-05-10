@@ -7,7 +7,7 @@ jobs:
     # This line tells the server to run all commands inside the 'cashew' folder
     defaults:
       run:
-        working-directory: ./cashew
+        working-directory: cashew
 
     steps:
       - uses: actions/checkout@v4
