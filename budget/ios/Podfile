@@ -52,10 +52,14 @@ post_install do |installer|
       end
     end
     
-    # 2. Ensure iOS 13 target AND allow non-modular imports (Fixes firebase_auth error)
+    # 2. Ensure iOS 13 target AND force compiler to ignore modular header errors
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
       config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+      
+      # Bruteforce disable the non-modular header error
+      config.build_settings['OTHER_CFLAGS'] ||= ['$(inherited)']
+      config.build_settings['OTHER_CFLAGS'] << '-Wno-error=non-modular-include-in-framework-module'
     end
   end
 
