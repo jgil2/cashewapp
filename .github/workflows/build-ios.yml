@@ -1,44 +1,53 @@
-name: Build iOS IPA (Unsigned)
+name: Build Unsigned IPA
 
-# This allows you to run the build manually from the Actions tab
 on:
   workflow_dispatch:
 
 jobs:
   build-ios:
-    # Uses GitHub's free Mac servers
-    runs-on: macos-latest
+    runs-on: macos-14
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.10.6' # The exact version that fixes your Dart SDK error!
-          channel: 'stable'
+          flutter-version: "3.24.5"
 
-      - name: Install dependencies
+      - name: Select Xcode 15.4
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app
+
+      - name: Flutter Doctor
+        run: flutter doctor -v
+
+      - name: Get Dependencies
+        working-directory: budget
+        run: flutter pub get
+
+      - name: Clean
+        working-directory: budget
         run: |
-          cd budget
-          flutter pub get
+          flutter clean
+          rm -rf ios/Pods
+          rm -rf ios/Podfile.lock
 
-      - name: Build unsigned iOS app
+      - name: Install Pods
+        working-directory: budget/ios
         run: |
-          cd budget
-          # Builds the raw iOS app without requiring Apple Developer certificates
-          flutter build ios --release --no-codesign
+          pod repo update
+          pod install
 
-      - name: Package into .ipa for Sideloading
+      - name: Build Unsigned IPA
+        working-directory: budget
         run: |
-          cd budget/build/ios/iphoneos
-          mkdir Payload
-          mv Runner.app Payload/
-          zip -qr Cashew.ipa Payload/
+          flutter build ipa \
+            --release \
+            --no-codesign
 
-      - name: Upload IPA Artifact
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: Cashew-iOS-App
-          path: budget/build/ios/iphoneos/Cashew.ipa
+          name: unsigned-ipa
+          path: budget/build/ios/ipa/*.ipa
