@@ -58,14 +58,20 @@ post_install do |installer|
     end
   end
 
-  # 2. Fix the gRPC-Core basic_seq.h template error for Xcode 16
-  grpc_file_path = "Pods/gRPC-Core/src/core/lib/promise/detail/basic_seq.h"
-  if File.exist?(grpc_file_path)
-    file_content = File.read(grpc_file_path)
-    if file_content.include?('Traits::template CallSeqFactory(')
-      file_content.gsub!('Traits::template CallSeqFactory(', 'Traits::template CallSeqFactory<>(')
-      File.open(grpc_file_path, "w") { |file| file.puts file_content }
-      puts "Patched basic_seq.h for Xcode 16"
+  # 2. Fix the gRPC basic_seq.h template error for Xcode 16 in ALL gRPC pods
+  grpc_paths = [
+    "Pods/gRPC-Core/src/core/lib/promise/detail/basic_seq.h",
+    "Pods/gRPC-C++/src/core/lib/promise/detail/basic_seq.h"
+  ]
+  
+  grpc_paths.each do |grpc_file_path|
+    if File.exist?(grpc_file_path)
+      file_content = File.read(grpc_file_path)
+      if file_content.include?('Traits::template CallSeqFactory(')
+        file_content.gsub!('Traits::template CallSeqFactory(', 'Traits::template CallSeqFactory<>(')
+        File.open(grpc_file_path, "w") { |file| file.puts file_content }
+        puts "Patched basic_seq.h for Xcode 16"
+      end
     end
   end
 end
