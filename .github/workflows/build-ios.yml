@@ -8,11 +8,9 @@ jobs:
     runs-on: macos-14
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.24.5"
 
@@ -41,13 +39,25 @@ jobs:
 
       - name: Build Unsigned IPA
         working-directory: budget
-        run: |
-          flutter build ipa \
-            --release \
-            --no-codesign
+        run: flutter build ipa --release --no-codesign
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: unsigned-ipa
           path: budget/build/ios/ipa/*.ipa
+
+      - name: Clean Everything
+        working-directory: budget
+        run: |
+          flutter clean
+          rm -rf ios/Pods
+          rm -rf ios/Podfile.lock
+          rm -rf ~/Library/Developer/Xcode/DerivedData
+
+      - name: Reinstall Pods
+        working-directory: budget/ios
+        run: |
+          pod deintegrate
+          pod repo update
+          pod install
