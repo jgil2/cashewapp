@@ -52,13 +52,14 @@ post_install do |installer|
       end
     end
     
-    # Ensure iOS 13.0 target matches your build
+    # 2. Ensure iOS 13 target AND allow non-modular imports (Fixes firebase_auth error)
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+      config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
     end
   end
 
-  # 2. Fix the gRPC basic_seq.h template error for Xcode 16 in ALL gRPC pods
+  # 3. Fix the gRPC basic_seq.h template error for Xcode 16 in ALL gRPC pods
   grpc_paths = [
     "Pods/gRPC-Core/src/core/lib/promise/detail/basic_seq.h",
     "Pods/gRPC-C++/src/core/lib/promise/detail/basic_seq.h"
